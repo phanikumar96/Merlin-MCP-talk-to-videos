@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Marlin MCP — Video Intelligence for AI Assistants</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    --cyan:   #00d4ff;
+    --purple: #a855f7;
+    --blue:   #3b82f6;
+    --green:  #10b981;
+    --bg:     #06060f;
+    --surface:#0e0e1a;
+    --border: rgba(255,255,255,0.07);
+    --text:   #e2e8f0;
+    --muted:  #64748b;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* ── CANVAS STARS ── */
+  #stars { position:fixed; inset:0; z-index:0; pointer-events:none; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    padding: 1.2rem 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(6,6,15,0.7);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo { font-weight:900; font-size:1.3rem; letter-spacing:0.15em;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .nav-links { display:flex; gap:2rem; }
+  .nav-links a { color:var(--muted); text-decoration:none; font-size:0.85rem;
+    letter-spacing:0.05em; transition:color .2s; }
+  .nav-links a:hover { color:var(--cyan); }
+
+  /* ── SECTION BASE ── */
+  section { position:relative; z-index:1; }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    text-align:center; padding: 8rem 2rem 4rem;
+    overflow:hidden;
+  }
+  .hero-eyebrow {
+    font-size:0.75rem; letter-spacing:0.3em; font-weight:600;
+    color:var(--cyan); text-transform:uppercase; margin-bottom:1.5rem;
+    opacity:0; animation: fadeUp .8s .3s forwards;
+  }
+  .hero-title {
+    font-size: clamp(4rem, 12vw, 10rem);
+    font-weight:900; line-height:0.9; letter-spacing:-0.03em;
+    background: linear-gradient(135deg, #fff 0%, var(--cyan) 50%, var(--purple) 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    opacity:0; animation: fadeUp .9s .5s forwards;
+  }
+  .hero-sub {
+    margin-top:1.5rem; font-size:clamp(1rem,2.5vw,1.4rem);
+    color:var(--muted); max-width:600px; line-height:1.7;
+    opacity:0; animation: fadeUp .9s .7s forwards;
+  }
+  .hero-cta {
+    margin-top:2.5rem; display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;
+    opacity:0; animation: fadeUp .9s .9s forwards;
+  }
+  .btn {
+    padding:.85rem 2rem; border-radius:999px; font-weight:600;
+    font-size:.9rem; letter-spacing:0.05em; cursor:pointer;
+    text-decoration:none; transition: all .25s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+    color:#000;
+  }
+  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 0 30px rgba(0,212,255,.4); }
+  .btn-outline {
+    border:1px solid var(--border); color:var(--text);
+    background:rgba(255,255,255,0.03);
+  }
+  .btn-outline:hover { border-color:var(--cyan); color:var(--cyan); transform:translateY(-2px); }
+
+  .hero-scroll {
+    margin-top:4rem; display:flex; flex-direction:column; align-items:center; gap:.5rem;
+    color:var(--muted); font-size:.75rem; letter-spacing:.15em;
+    opacity:0; animation: fadeUp .9s 1.2s forwards;
+  }
+  .scroll-line {
+    width:1px; height:50px;
+    background:linear-gradient(to bottom, var(--cyan), transparent);
+    animation: scrollPulse 2s infinite;
+  }
+
+  /* ── GLOW ORBS ── */
+  .orb {
+    position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none;
+  }
+  .orb-1 { width:600px; height:600px; background:rgba(0,212,255,.08);
+    top:-200px; left:-200px; }
+  .orb-2 { width:500px; height:500px; background:rgba(168,85,247,.08);
+    bottom:-200px; right:-200px; }
+
+  /* ── LABEL ── */
+  .section-label {
+    font-size:.7rem; letter-spacing:.3em; font-weight:700;
+    color:var(--cyan); text-transform:uppercase; margin-bottom:.75rem;
+  }
+  .section-title {
+    font-size:clamp(2rem,5vw,3.5rem); font-weight:900;
+    line-height:1.1; letter-spacing:-.02em;
+  }
+  .section-title span {
+    background:linear-gradient(135deg, var(--cyan), var(--purple));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .section-body { color:var(--muted); line-height:1.8; font-size:1.05rem; }
+
+  /* ── ABOUT THE MODEL ── */
+  #model { padding:8rem 2rem; }
+  .model-inner {
+    max-width:1100px; margin:0 auto;
+    display:grid; grid-template-columns:1fr 1fr; gap:5rem; align-items:center;
+  }
+  .model-badge {
+    display:inline-flex; align-items:center; gap:.5rem;
+    background:rgba(0,212,255,.08); border:1px solid rgba(0,212,255,.2);
+    border-radius:999px; padding:.4rem 1rem; font-size:.8rem;
+    color:var(--cyan); margin-bottom:1.5rem;
+  }
+  .model-stats {
+    margin-top:2.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1rem;
+  }
+  .stat-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:16px; padding:1.5rem;
+    transition: border-color .3s, transform .3s;
+  }
+  .stat-card:hover { border-color:rgba(0,212,255,.3); transform:translateY(-4px); }
+  .stat-num {
+    font-size:2rem; font-weight:900;
+    background:linear-gradient(135deg, var(--cyan), var(--blue));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .stat-label { color:var(--muted); font-size:.85rem; margin-top:.3rem; }
+
+  .model-visual {
+    position:relative; display:flex; align-items:center; justify-content:center;
+  }
+  .model-ring {
+    width:320px; height:320px; border-radius:50%;
+    border:1px solid rgba(0,212,255,.15);
+    display:flex; align-items:center; justify-content:center;
+    position:relative; animation: spin 20s linear infinite;
+  }
+  .model-ring::before {
+    content:''; position:absolute; inset:-1px; border-radius:50%;
+    background:conic-gradient(from 0deg, transparent 0%, var(--cyan) 10%, transparent 20%);
+    animation: spin 3s linear infinite;
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #fff calc(100% - 1px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #fff calc(100% - 1px));
+  }
+  .model-ring-inner {
+    width:240px; height:240px; border-radius:50%;
+    border:1px solid rgba(168,85,247,.15);
+    display:flex; align-items:center; justify-content:center;
+    animation: spin 15s linear infinite reverse;
+  }
+  .model-core {
+    width:160px; height:160px; border-radius:50%;
+    background:radial-gradient(circle, rgba(0,212,255,.2), rgba(168,85,247,.1), transparent);
+    border:1px solid rgba(0,212,255,.3);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    animation: none;
+    font-size:2rem; font-weight:900; letter-spacing:.1em;
+    color:#fff;
+  }
+  .model-core span { font-size:.7rem; color:var(--cyan); letter-spacing:.3em; font-weight:600; }
+
+  /* ── MCP EXPLAINER ── */
+  #mcp {
+    padding:8rem 2rem;
+    background:linear-gradient(180deg, transparent, rgba(168,85,247,.03), transparent);
+  }
+  .mcp-inner { max-width:1100px; margin:0 auto; }
+  .mcp-header { text-align:center; margin-bottom:4rem; }
+  .mcp-header .section-body { max-width:700px; margin:.75rem auto 0; }
+
+  .mcp-flow {
+    display:flex; align-items:center; justify-content:center;
+    gap:0; flex-wrap:wrap; margin-top:3rem;
+  }
+  .flow-node {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:20px; padding:1.5rem 1.8rem; text-align:center;
+    min-width:160px; transition:all .3s; position:relative;
+  }
+  .flow-node:hover { border-color:rgba(0,212,255,.4); transform:translateY(-4px);
+    box-shadow:0 20px 40px rgba(0,212,255,.1); }
+  .flow-icon { font-size:2rem; margin-bottom:.5rem; }
+  .flow-title { font-weight:700; font-size:.9rem; }
+  .flow-desc { color:var(--muted); font-size:.75rem; margin-top:.25rem; }
+
+  .flow-arrow {
+    color:var(--cyan); font-size:1.5rem; padding:0 .5rem;
+    opacity:.6; flex-shrink:0;
+  }
+
+  .mcp-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:4rem; }
+  .mcp-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:20px; padding:2rem;
+    transition: all .3s;
+  }
+  .mcp-card:hover { border-color:rgba(168,85,247,.3); transform:translateY(-4px); }
+  .mcp-card-icon {
+    width:48px; height:48px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.4rem; margin-bottom:1rem;
+  }
+  .mcp-card h3 { font-size:1rem; font-weight:700; margin-bottom:.5rem; }
+  .mcp-card p { color:var(--muted); font-size:.88rem; line-height:1.7; }
+
+  /* ── TOOLS ── */
+  #tools { padding:8rem 2rem; }
+  .tools-inner { max-width:1100px; margin:0 auto; }
+  .tools-header { text-align:center; margin-bottom:5rem; }
+
+  .tool-card {
+    display:grid; grid-template-columns:1fr 1fr; gap:4rem;
+    align-items:center; margin-bottom:6rem;
+    padding:3rem; border-radius:28px;
+    background:var(--surface); border:1px solid var(--border);
+    transition:border-color .3s;
+  }
+  .tool-card:hover { border-color:rgba(0,212,255,.2); }
+  .tool-card.reverse { direction:rtl; }
+  .tool-card.reverse > * { direction:ltr; }
+
+  .tool-tag {
+    display:inline-block; background:rgba(0,212,255,.1);
+    border:1px solid rgba(0,212,255,.25); color:var(--cyan);
+    border-radius:999px; padding:.3rem .9rem; font-size:.72rem;
+    letter-spacing:.15em; font-weight:700; text-transform:uppercase;
+    margin-bottom:1rem;
+  }
+  .tool-card.reverse .tool-tag { background:rgba(168,85,247,.1);
+    border-color:rgba(168,85,247,.25); color:var(--purple); }
+
+  .tool-name { font-size:1.8rem; font-weight:900; margin-bottom:.75rem; }
+  .tool-desc { color:var(--muted); line-height:1.8; margin-bottom:1.5rem; }
+
+  .tool-outputs { display:flex; flex-direction:column; gap:.6rem; }
+  .output-item {
+    display:flex; align-items:center; gap:.75rem;
+    background:rgba(0,212,255,.04); border:1px solid rgba(0,212,255,.1);
+    border-radius:10px; padding:.6rem 1rem;
+  }
+  .tool-card.reverse .output-item { background:rgba(168,85,247,.04); border-color:rgba(168,85,247,.1); }
+  .output-dot { width:6px; height:6px; border-radius:50%; background:var(--cyan); flex-shrink:0; }
+  .tool-card.reverse .output-dot { background:var(--purple); }
+  .output-text { font-size:.85rem; }
+  .output-key { font-family:'JetBrains Mono',monospace; color:var(--cyan); }
+  .tool-card.reverse .output-key { color:var(--purple); }
+
+  .tool-visual {
+    background: rgba(0,0,0,.3); border-radius:20px;
+    border:1px solid var(--border); overflow:hidden;
+  }
+  .tv-header {
+    padding:.75rem 1rem; background:rgba(255,255,255,.03);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:.5rem;
+  }
+  .tv-dot { width:10px; height:10px; border-radius:50%; }
+  .tv-body { padding:1.5rem; font-family:'JetBrains Mono',monospace; font-size:.78rem; }
+  .tv-line { line-height:2; }
+  .k { color:var(--purple); }
+  .s { color:#a3e635; }
+  .v { color:var(--cyan); }
+  .c { color:var(--muted); }
+  .fn { color:#f59e0b; }
+
+  /* ── ARCHITECTURE ── */
+  #architecture { padding:8rem 2rem; background:linear-gradient(180deg,transparent,rgba(0,212,255,.02),transparent); }
+  .arch-inner { max-width:900px; margin:0 auto; }
+  .arch-header { text-align:center; margin-bottom:4rem; }
+
+  .arch-diagram {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:28px; padding:3rem; position:relative; overflow:hidden;
+  }
+  .arch-diagram::before {
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(ellipse at 50% 0%, rgba(0,212,255,.05), transparent 70%);
+    pointer-events:none;
+  }
+
+  .arch-row { display:flex; align-items:center; justify-content:center; gap:1rem; margin-bottom:1rem; }
+  .arch-box {
+    background:rgba(0,0,0,.4); border-radius:14px;
+    border:1px solid var(--border); padding:1rem 1.5rem;
+    text-align:center; min-width:160px;
+  }
+  .arch-box.client { border-color:rgba(0,212,255,.3); }
+  .arch-box.api    { border-color:rgba(168,85,247,.3); }
+  .arch-box.model  { border-color:rgba(16,185,129,.3); }
+  .arch-box.mcp    { border-color:rgba(59,130,246,.3); }
+  .arch-box-label { font-size:.65rem; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); }
+  .arch-box-name  { font-weight:800; font-size:.95rem; margin-top:.2rem; }
+  .arch-box.client .arch-box-name { color:var(--cyan); }
+  .arch-box.mcp    .arch-box-name { color:var(--blue); }
+  .arch-box.api    .arch-box-name { color:var(--purple); }
+  .arch-box.model  .arch-box-name { color:var(--green); }
+
+  .arch-arrow {
+    display:flex; flex-direction:column; align-items:center; gap:.2rem;
+    color:var(--muted); font-size:.65rem; letter-spacing:.1em;
+  }
+  .arch-arrow-line {
+    width:60px; height:1px; position:relative;
+    background:linear-gradient(90deg, var(--cyan), var(--purple));
+    opacity:.4;
+  }
+  .arch-arrow-vert {
+    width:1px; height:50px; position:relative;
+    background:linear-gradient(180deg, var(--purple), var(--green));
+    opacity:.4;
+  }
+  .arch-port {
+    background:rgba(0,212,255,.08); border:1px solid rgba(0,212,255,.2);
+    border-radius:999px; padding:.2rem .7rem; font-size:.65rem;
+    color:var(--cyan); font-family:'JetBrains Mono',monospace;
+  }
+
+  /* ── BUILD GUIDE ── */
+  #build { padding:8rem 2rem; }
+  .build-inner { max-width:900px; margin:0 auto; }
+  .build-header { text-align:center; margin-bottom:5rem; }
+
+  .steps { display:flex; flex-direction:column; gap:0; }
+  .step {
+    display:grid; grid-template-columns:64px 1fr; gap:2rem;
+    padding-bottom:3rem; position:relative;
+  }
+  .step:not(:last-child)::after {
+    content:''; position:absolute; left:31px; top:64px; bottom:0;
+    width:1px; background:linear-gradient(180deg, var(--cyan), transparent);
+    opacity:.2;
+  }
+  .step-num {
+    width:64px; height:64px; border-radius:50%; flex-shrink:0;
+    background:var(--surface); border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:900; font-size:1.1rem;
+    background:linear-gradient(135deg, rgba(0,212,255,.15), rgba(168,85,247,.15));
+    border-color:rgba(0,212,255,.2); color:var(--cyan);
+  }
+  .step-content { padding-top:.75rem; }
+  .step-title { font-weight:800; font-size:1.1rem; margin-bottom:.5rem; }
+  .step-desc { color:var(--muted); font-size:.9rem; margin-bottom:1rem; line-height:1.7; }
+
+  .code-block {
+    background:rgba(0,0,0,.5); border:1px solid var(--border);
+    border-radius:14px; overflow:hidden;
+  }
+  .code-block-header {
+    padding:.6rem 1rem; background:rgba(255,255,255,.03);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .code-block-title { font-size:.72rem; color:var(--muted); letter-spacing:.1em; }
+  .copy-btn {
+    font-size:.65rem; color:var(--muted); background:none; border:1px solid var(--border);
+    border-radius:6px; padding:.2rem .5rem; cursor:pointer; transition:all .2s;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .copy-btn:hover { color:var(--cyan); border-color:rgba(0,212,255,.3); }
+  .code-block pre {
+    padding:1.25rem 1.5rem; font-family:'JetBrains Mono',monospace;
+    font-size:.8rem; line-height:1.8; overflow-x:auto; color:#e2e8f0;
+  }
+  .code-block pre .cmd { color:var(--cyan); }
+  .code-block pre .comment { color:var(--muted); font-style:italic; }
+  .code-block pre .str { color:#a3e635; }
+  .code-block pre .flag { color:#f59e0b; }
+
+  /* ── RUNPOD ── */
+  #deploy { padding:8rem 2rem; background:linear-gradient(180deg,transparent,rgba(168,85,247,.03),transparent); }
+  .deploy-inner { max-width:1100px; margin:0 auto; }
+  .deploy-header { text-align:center; margin-bottom:4rem; }
+
+  .deploy-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+  .deploy-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:24px; padding:2.5rem; transition:all .3s;
+  }
+  .deploy-card:hover { transform:translateY(-4px); border-color:rgba(168,85,247,.3); }
+  .deploy-card h3 { font-size:1.2rem; font-weight:800; margin:1rem 0 .75rem; }
+  .deploy-card p { color:var(--muted); font-size:.9rem; line-height:1.7; margin-bottom:1.5rem; }
+  .step-tag {
+    display:inline-block; font-size:.68rem; letter-spacing:.2em; text-transform:uppercase;
+    background:rgba(168,85,247,.1); border:1px solid rgba(168,85,247,.2);
+    color:var(--purple); border-radius:999px; padding:.25rem .75rem; font-weight:700;
+  }
+  .port-chips { display:flex; gap:.75rem; flex-wrap:wrap; margin-top:1rem; }
+  .port-chip {
+    background:rgba(0,212,255,.08); border:1px solid rgba(0,212,255,.2);
+    color:var(--cyan); border-radius:10px; padding:.5rem 1rem;
+    font-family:'JetBrains Mono',monospace; font-size:.85rem; font-weight:600;
+  }
+
+  /* ── HERMES CONFIG ── */
+  #hermes { padding:8rem 2rem; }
+  .hermes-inner { max-width:900px; margin:0 auto; text-align:center; }
+  .hermes-inner .section-body { margin:.75rem auto 3rem; }
+
+  .config-wrap {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:24px; overflow:hidden; text-align:left;
+  }
+  .config-wrap-header {
+    padding:1rem 1.5rem; background:rgba(255,255,255,.03);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:.75rem;
+  }
+  .cfg-dot { width:10px; height:10px; border-radius:50%; }
+  .cfg-path { font-family:'JetBrains Mono',monospace; font-size:.75rem; color:var(--muted); margin-left:auto; }
+
+  .config-wrap pre {
+    padding:2rem; font-family:'JetBrains Mono',monospace;
+    font-size:.82rem; line-height:2; color:#e2e8f0; overflow-x:auto;
+  }
+  .y-key   { color:var(--cyan); }
+  .y-val   { color:#a3e635; }
+  .y-num   { color:#f59e0b; }
+  .y-cmt   { color:var(--muted); font-style:italic; }
+  .y-hl    { background:rgba(0,212,255,.07); display:block; margin:0 -2rem; padding:0 2rem; border-left:2px solid var(--cyan); }
+
+  /* ── CTA ── */
+  #cta { padding:10rem 2rem; text-align:center; position:relative; overflow:hidden; }
+  #cta::before {
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(ellipse at 50% 50%, rgba(0,212,255,.06) 0%, transparent 70%);
+  }
+  .cta-inner { position:relative; max-width:700px; margin:0 auto; }
+  #cta .section-title { font-size:clamp(2.5rem,6vw,4rem); }
+  #cta .section-body { margin:1rem auto 2.5rem; max-width:500px; }
+  .cta-buttons { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+
+  /* ── FOOTER ── */
+  footer {
+    padding:3rem; text-align:center; border-top:1px solid var(--border);
+    color:var(--muted); font-size:.85rem;
+  }
+  footer a { color:var(--cyan); text-decoration:none; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(30px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes spin {
+    from { transform:rotate(0deg); }
+    to   { transform:rotate(360deg); }
+  }
+  @keyframes scrollPulse {
+    0%,100% { opacity:.3; } 50% { opacity:1; }
+  }
+  @keyframes pulse {
+    0%,100% { opacity:.4; transform:scale(1); }
+    50%      { opacity:1;  transform:scale(1.05); }
+  }
+  @keyframes glow {
+    0%,100% { box-shadow:0 0 20px rgba(0,212,255,.2); }
+    50%      { box-shadow:0 0 40px rgba(0,212,255,.5); }
+  }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal {
+    opacity:0; transform:translateY(40px);
+    transition: opacity .8s ease, transform .8s ease;
+  }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width:768px) {
+    nav { padding:1rem 1.5rem; }
+    .nav-links { display:none; }
+    .model-inner, .tool-card, .deploy-grid { grid-template-columns:1fr; }
+    .tool-card.reverse { direction:ltr; }
+    .mcp-cards { grid-template-columns:1fr; }
+    .mcp-flow { gap:.5rem; }
+    .flow-arrow { display:none; }
+    .arch-row { flex-wrap:wrap; justify-content:center; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">MARLIN MCP</div>
+  <div class="nav-links">
+    <a href="#model">The Model</a>
+    <a href="#mcp">What is MCP</a>
+    <a href="#tools">Tools</a>
+    <a href="#build">Build Guide</a>
+    <a href="#deploy">Deploy</a>
+    <a href="https://github.com/PromptEngineer48/Marlin-2B-MCP" target="_blank">GitHub →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="hero-eyebrow">NemoStation / Marlin-2B · MCP Server</div>
+  <h1 class="hero-title">MARLIN</h1>
+  <p class="hero-sub">
+    A cinematic journey through building a video intelligence MCP server —
+    giving AI assistants the ability to <em>see</em>, <em>describe</em>,
+    and <em>search</em> inside any video.
+  </p>
+  <div class="hero-cta">
+    <a href="https://github.com/PromptEngineer48/Marlin-2B-MCP" target="_blank" class="btn btn-primary">View on GitHub</a>
+    <a href="#model" class="btn btn-outline">Explore ↓</a>
+  </div>
+  <div class="hero-scroll">
+    <span>SCROLL</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- MODEL -->
+<section id="model">
+  <div class="model-inner">
+    <div class="reveal">
+      <div class="model-badge">🤗 HuggingFace Model</div>
+      <div class="section-label">The Foundation</div>
+      <h2 class="section-title">Meet <span>Marlin-2B</span></h2>
+      <p class="section-body" style="margin-top:.75rem;">
+        Marlin-2B is a 2-billion parameter video-language model by NemoStation.
+        Unlike image models, Marlin understands the <strong>temporal dimension</strong>
+        of video — it can watch a clip and tell you what happened, when it happened,
+        and answer questions about specific moments in time.
+      </p>
+      <p class="section-body" style="margin-top:1rem;">
+        It ships with two powerful primitives: <strong>caption</strong> — which produces
+        a full scene description and event timeline — and <strong>find</strong> — which
+        locates a described event and returns the exact timestamp span.
+      </p>
+      <div class="model-stats">
+        <div class="stat-card">
+          <div class="stat-num">2B</div>
+          <div class="stat-label">Parameter count</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">bfloat16</div>
+          <div class="stat-label">Inference dtype</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">~5 GB</div>
+          <div class="stat-label">Download size</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">CUDA</div>
+          <div class="stat-label">GPU accelerated</div>
+        </div>
+      </div>
+    </div>
+    <div class="model-visual reveal">
+      <div class="model-ring">
+        <div class="model-ring-inner">
+          <div class="model-core">
+            2B
+            <span>MARLIN</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MCP -->
+<section id="mcp">
+  <div class="mcp-inner">
+    <div class="mcp-header reveal">
+      <div class="section-label">The Protocol</div>
+      <h2 class="section-title">What is <span>MCP</span>?</h2>
+      <p class="section-body">
+        Model Context Protocol (MCP) is an open standard that lets AI assistants
+        call external tools. Instead of being limited to text, an AI that speaks MCP
+        can invoke functions — running code, calling APIs, reading files — and get
+        structured results back. Think of it as a universal plugin system for AI.
+      </p>
+    </div>
+
+    <div class="mcp-flow reveal">
+      <div class="flow-node">
+        <div class="flow-icon">🤖</div>
+        <div class="flow-title">AI Assistant</div>
+        <div class="flow-desc">Hermes, Claude, etc.</div>
+      </div>
+      <div class="flow-arrow">──────▶</div>
+      <div class="flow-node">
+        <div class="flow-icon">🔌</div>
+        <div class="flow-title">MCP Server</div>
+        <div class="flow-desc">Exposes tools via HTTP</div>
+      </div>
+      <div class="flow-arrow">──────▶</div>
+      <div class="flow-node">
+        <div class="flow-icon">⚡</div>
+        <div class="flow-title">Tool Execution</div>
+        <div class="flow-desc">Real computation runs</div>
+      </div>
+      <div class="flow-arrow">──────▶</div>
+      <div class="flow-node">
+        <div class="flow-icon">📦</div>
+        <div class="flow-title">Structured Result</div>
+        <div class="flow-desc">JSON back to the AI</div>
+      </div>
+    </div>
+
+    <div class="mcp-cards reveal">
+      <div class="mcp-card">
+        <div class="mcp-card-icon" style="background:rgba(0,212,255,.1);">🌐</div>
+        <h3>HTTP Transport</h3>
+        <p>Marlin's MCP server speaks HTTP, so any MCP-compatible client on any machine can call it over the network — no local installation needed on the client side.</p>
+      </div>
+      <div class="mcp-card">
+        <div class="mcp-card-icon" style="background:rgba(168,85,247,.1);">🛠️</div>
+        <h3>Typed Tools</h3>
+        <p>Each tool has a typed schema — name, description, and parameter types. The AI reads this schema and knows exactly how to call the tool with the right arguments.</p>
+      </div>
+      <div class="mcp-card">
+        <div class="mcp-card-icon" style="background:rgba(16,185,129,.1);">🔒</div>
+        <h3>Stateless &amp; Safe</h3>
+        <p>Every tool call is independent. The server holds no session state between calls, making it simple, predictable, and safe to run in cloud environments.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLS -->
+<section id="tools">
+  <div class="tools-inner">
+    <div class="tools-header reveal">
+      <div class="section-label">The Capabilities</div>
+      <h2 class="section-title">Two <span>Powerful Tools</span></h2>
+    </div>
+
+    <!-- Tool 1 -->
+    <div class="tool-card reveal">
+      <div>
+        <div class="tool-tag">Tool 01</div>
+        <div class="tool-name">describe_video</div>
+        <p class="tool-desc">
+          Pass any video file path. Marlin watches the entire clip and returns a
+          rich, structured description — a natural-language caption, a scene
+          category, and a timeline of discrete events detected throughout the video.
+        </p>
+        <div class="tool-outputs">
+          <div class="output-item">
+            <div class="output-dot"></div>
+            <div class="output-text"><span class="output-key">caption</span> — Full natural-language description of the video</div>
+          </div>
+          <div class="output-item">
+            <div class="output-dot"></div>
+            <div class="output-text"><span class="output-key">scene</span> — High-level scene category (indoor, outdoor, etc.)</div>
+          </div>
+          <div class="output-item">
+            <div class="output-dot"></div>
+            <div class="output-text"><span class="output-key">events</span> — Ordered list of detected events with timestamps</div>
+          </div>
+        </div>
+      </div>
+      <div class="tool-visual">
+        <div class="tv-header">
+          <div class="tv-dot" style="background:#ff5f56;"></div>
+          <div class="tv-dot" style="background:#ffbd2e;"></div>
+          <div class="tv-dot" style="background:#27c93f;"></div>
+          <span style="margin-left:.5rem;font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;">describe_video response</span>
+        </div>
+        <div class="tv-body">
+          <div class="tv-line"><span class="k">{</span></div>
+          <div class="tv-line">&nbsp;&nbsp;<span class="v">"caption"</span>: <span class="s">"A man in a blue jacket walks through a busy train station, stops to check his phone, then boards a departing train."</span>,</div>
+          <div class="tv-line">&nbsp;&nbsp;<span class="v">"scene"</span>: <span class="s">"transportation / public transit"</span>,</div>
+          <div class="tv-line">&nbsp;&nbsp;<span class="v">"events"</span>: <span class="k">[</span></div>
+          <div class="tv-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="s">"0:00 – Person enters frame from left"</span>,</div>
+          <div class="tv-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="s">"0:04 – Subject stops, looks at phone"</span>,</div>
+          <div class="tv-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="s">"0:09 – Train arrives at platform"</span>,</div>
+          <div class="tv-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="s">"0:14 – Person boards train"</span></div>
+          <div class="tv-line">&nbsp;&nbsp;<span class="k">]</span></div>
+          <div class="tv-line"><span class="k">}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tool 2 -->
+    <div class="tool-card reverse reveal">
+      <div>
+        <div class="tool-tag">Tool 02</div>
+        <div class="tool-name">search_video_event</div>
+        <p class="tool-desc">
+          Describe any event in natural language and Marlin scrubs the entire video
+          to find exactly when it occurs. Returns the raw model output, the detected
+          timestamp span, and whether the response was well-formed.
+          Perfect for video search, highlight extraction, and evidence retrieval.
+        </p>
+        <div class="tool-outputs">
+          <div class="output-item">
+            <div class="output-dot"></div>
+            <div class="output-text"><span class="output-key">span</span> — Start and end timestamp of the matched event</div>
+          </div>
+          <div class="output-item">
+            <div class="output-dot"></div>
+            <div class="output-text"><span class="output-key">raw</span> — Raw model response for transparency</div>
+          </div>
+          <div class="output-item">
+            <div class="output-dot"></div>
+            <div class="output-text"><span class="output-key">format_ok</span> — Whether the span was cleanly parsed</div>
+          </div>
+        </div>
+      </div>
+      <div class="tool-visual">
+        <div class="tv-header">
+          <div class="tv-dot" style="background:#ff5f56;"></div>
+          <div class="tv-dot" style="background:#ffbd2e;"></div>
+          <div class="tv-dot" style="background:#27c93f;"></div>
+          <span style="margin-left:.5rem;font-size:.7rem;color:var(--muted);font-family:'JetBrains Mono',monospace;">search_video_event response</span>
+        </div>
+        <div class="tv-body">
+          <div class="tv-line"><span class="c"># query: "person boards the train"</span></div>
+          <div class="tv-line">&nbsp;</div>
+          <div class="tv-line"><span class="k">{</span></div>
+          <div class="tv-line">&nbsp;&nbsp;<span class="v">"query"</span>: <span class="s">"person boards the train"</span>,</div>
+          <div class="tv-line">&nbsp;&nbsp;<span class="v">"span"</span>: <span class="k">{</span></div>
+          <div class="tv-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="v">"start"</span>: <span class="fn">14.2</span>,</div>
+          <div class="tv-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="v">"end"</span>: <span class="fn">18.7</span></div>
+          <div class="tv-line">&nbsp;&nbsp;<span class="k">}</span>,</div>
+          <div class="tv-line">&nbsp;&nbsp;<span class="v">"raw"</span>: <span class="s">"The event occurs between 14.2s and 18.7s."</span>,</div>
+          <div class="tv-line">&nbsp;&nbsp;<span class="v">"format_ok"</span>: <span class="fn">true</span></div>
+          <div class="tv-line"><span class="k">}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <div class="arch-inner">
+    <div class="arch-header reveal">
+      <div class="section-label">Under the Hood</div>
+      <h2 class="section-title">The <span>Architecture</span></h2>
+      <p class="section-body" style="margin:.75rem auto 0;max-width:600px;">
+        Two lightweight servers run on the GPU pod. The MCP server translates
+        AI tool calls into HTTP requests to the model API, keeping concerns clean
+        and each layer independently replaceable.
+      </p>
+    </div>
+
+    <div class="arch-diagram reveal">
+      <div class="arch-row">
+        <div class="arch-box client">
+          <div class="arch-box-label">MCP Client</div>
+          <div class="arch-box-name">Hermes / Claude</div>
+        </div>
+      </div>
+      <div class="arch-row" style="flex-direction:column;gap:.5rem;">
+        <div class="arch-arrow-vert"></div>
+        <div class="arch-port">port 8006</div>
+        <div class="arch-arrow-vert"></div>
+      </div>
+      <div class="arch-row">
+        <div class="arch-box mcp">
+          <div class="arch-box-label">marlin_mcp.py</div>
+          <div class="arch-box-name">FastMCP Server</div>
+        </div>
+      </div>
+      <div class="arch-row" style="flex-direction:column;gap:.5rem;">
+        <div class="arch-arrow-vert" style="background:linear-gradient(180deg,var(--blue),var(--purple));"></div>
+        <div class="arch-port" style="border-color:rgba(168,85,247,.3);color:var(--purple);">port 8005</div>
+        <div class="arch-arrow-vert" style="background:linear-gradient(180deg,var(--blue),var(--purple));"></div>
+      </div>
+      <div class="arch-row">
+        <div class="arch-box api">
+          <div class="arch-box-label">marlin_api.py</div>
+          <div class="arch-box-name">FastAPI Wrapper</div>
+        </div>
+      </div>
+      <div class="arch-row" style="flex-direction:column;gap:.5rem;">
+        <div class="arch-arrow-vert" style="background:linear-gradient(180deg,var(--purple),var(--green));"></div>
+        <div class="arch-arrow-vert" style="background:linear-gradient(180deg,var(--purple),var(--green));"></div>
+      </div>
+      <div class="arch-row">
+        <div class="arch-box model">
+          <div class="arch-box-label">NemoStation/Marlin-2B</div>
+          <div class="arch-box-name">GPU · bfloat16</div>
+        </div>
+      </div>
+
+      <div style="margin-top:2.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.15);border-radius:14px;padding:1.25rem;">
+          <div style="font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--blue);font-weight:700;margin-bottom:.5rem;">marlin_mcp.py</div>
+          <p style="color:var(--muted);font-size:.82rem;line-height:1.7;">Exposes <code style="color:var(--cyan);font-family:'JetBrains Mono',monospace;">describe_video</code> and <code style="color:var(--cyan);font-family:'JetBrains Mono',monospace;">search_video_event</code> as MCP tools. Receives a file path, reads the video, and POSTs it to the API. No model code here.</p>
+        </div>
+        <div style="background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.15);border-radius:14px;padding:1.25rem;">
+          <div style="font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--purple);font-weight:700;margin-bottom:.5rem;">marlin_api.py</div>
+          <p style="color:var(--muted);font-size:.82rem;line-height:1.7;">Loads Marlin-2B on startup and holds it in GPU memory. Exposes <code style="color:var(--purple);font-family:'JetBrains Mono',monospace;">/describe</code> and <code style="color:var(--purple);font-family:'JetBrains Mono',monospace;">/search</code> via FastAPI. Accepts video file uploads, returns JSON.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BUILD GUIDE -->
+<section id="build">
+  <div class="build-inner">
+    <div class="build-header reveal">
+      <div class="section-label">Set It Up Yourself</div>
+      <h2 class="section-title">The Complete <span>Build Guide</span></h2>
+    </div>
+
+    <div class="steps">
+
+      <div class="step reveal">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">Clone the repository</div>
+          <p class="step-desc">Grab the two server files from GitHub.</p>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-title">bash</span>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <pre><span class="cmd">git clone</span> https://github.com/PromptEngineer48/Marlin-2B-MCP.git
+<span class="cmd">cd</span> Marlin-2B-MCP</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">Install Miniconda</div>
+          <p class="step-desc">We use conda to create an isolated Python environment. Run this on your Linux GPU machine (e.g. RunPod).</p>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-title">bash</span>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <pre><span class="cmd">curl</span> <span class="flag">-O</span> https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+<span class="cmd">bash</span> ./Miniconda3-latest-Linux-x86_64.sh
+<span class="comment"># Restart your shell or run: source ~/.bashrc</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">Create the conda environment</div>
+          <p class="step-desc">Python 3.13 in a clean environment named <code style="color:var(--cyan);font-family:'JetBrains Mono',monospace;">vlm</code>.</p>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-title">bash</span>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <pre><span class="cmd">conda create</span> <span class="flag">-n</span> vlm python=3.13 <span class="flag">-y</span>
+<span class="cmd">conda activate</span> vlm</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-title">Install MCP and requests</div>
+          <p class="step-desc">The MCP SDK powers the tool server. Requests handles the HTTP calls from MCP to the model API.</p>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-title">bash</span>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <pre><span class="cmd">pip install</span> mcp requests</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-title">Install the video model stack</div>
+          <p class="step-desc">Transformers for model loading, PyTorch for inference, torchcodec for video decoding, and supporting libraries.</p>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-title">bash</span>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <pre><span class="cmd">pip install</span> <span class="str">"transformers>=5.7.0"</span> <span class="str">"torch>=2.11.0"</span> torchcodec \
+            <span class="str">"qwen-vl-utils>=0.0.14"</span> av pillow</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="step-num">6</div>
+        <div class="step-content">
+          <div class="step-title">Install torchvision for your CUDA version</div>
+          <p class="step-desc">Visit <a href="https://pytorch.org" target="_blank" style="color:var(--cyan);">pytorch.org</a> and get the exact install command for your CUDA version. Example for CUDA 12.4:</p>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-title">bash · CUDA 12.4 example</span>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <pre><span class="cmd">pip install</span> torchvision <span class="flag">--index-url</span> https://download.pytorch.org/whl/cu124</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="step-num">7</div>
+        <div class="step-content">
+          <div class="step-title">Install FastAPI and Uvicorn</div>
+          <p class="step-desc">FastAPI powers the model API server. Uvicorn is the ASGI server that runs both servers.</p>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-title">bash</span>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <pre><span class="cmd">pip install</span> fastapi uvicorn</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="step-num">8</div>
+        <div class="step-content">
+          <div class="step-title">Start both servers</div>
+          <p class="step-desc">Open two terminals on the GPU machine. Start the model API first and wait for it to finish loading before starting the MCP server.</p>
+          <div class="code-block" style="margin-bottom:1rem;">
+            <div class="code-block-header">
+              <span class="code-block-title">Terminal 1 — model API · port 8005</span>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <pre><span class="cmd">conda activate</span> vlm
+<span class="cmd">uvicorn</span> marlin_api:app <span class="flag">--host</span> 0.0.0.0 <span class="flag">--port</span> 8005
+<span class="comment"># Wait for: "Marlin loaded."</span></pre>
+          </div>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-title">Terminal 2 — MCP server · port 8006</span>
+              <button class="copy-btn" onclick="copyCode(this)">copy</button>
+            </div>
+            <pre><span class="cmd">conda activate</span> vlm
+<span class="cmd">uvicorn</span> marlin_mcp:app <span class="flag">--host</span> 0.0.0.0 <span class="flag">--port</span> 8006
+<span class="comment"># MCP is now live on :8006</span></pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- DEPLOY -->
+<section id="deploy">
+  <div class="deploy-inner">
+    <div class="deploy-header reveal">
+      <div class="section-label">Cloud Deployment</div>
+      <h2 class="section-title">Running on <span>RunPod</span></h2>
+      <p class="section-body" style="margin:.75rem auto 0;max-width:600px;">
+        RunPod gives you an on-demand GPU with a public HTTPS proxy for any port
+        you expose — perfect for hosting the MCP server so any client can reach it.
+      </p>
+    </div>
+
+    <div class="deploy-grid reveal">
+      <div class="deploy-card">
+        <div style="font-size:2rem;">🚀</div>
+        <h3>Step 1 — Expose the ports</h3>
+        <p>Before starting the pod, add <strong>8005</strong> and <strong>8006</strong> under <em>HTTP Ports</em> in the RunPod pod configuration. RunPod will provision public HTTPS proxy URLs for both.</p>
+        <div class="port-chips">
+          <div class="port-chip">:8005 → model API</div>
+          <div class="port-chip">:8006 → MCP server</div>
+        </div>
+      </div>
+      <div class="deploy-card">
+        <div style="font-size:2rem;">🔗</div>
+        <h3>Step 2 — Note your proxy URL</h3>
+        <p>RunPod gives you a public URL in this format. Your MCP clients will use the port 8006 URL to call the tools from anywhere in the world.</p>
+        <div class="code-block" style="margin-top:1rem;">
+          <div class="code-block-header"><span class="code-block-title">your MCP endpoint</span></div>
+          <pre style="padding:1rem;font-size:.75rem;">https://&lt;pod-id&gt;-8006.proxy.runpod.net/mcp</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HERMES CONFIG -->
+<section id="hermes">
+  <div class="hermes-inner">
+    <div class="reveal">
+      <div class="section-label">Client Configuration</div>
+      <h2 class="section-title">Connect to <span>Hermes</span></h2>
+      <p class="section-body">
+        Open your Hermes config at <code style="color:var(--cyan);font-family:'JetBrains Mono',monospace;">C:\Users\&lt;you&gt;\AppData\Local\hermes\config.yaml</code>
+        and add the <code style="color:var(--cyan);font-family:'JetBrains Mono',monospace;">marlin</code> block under <code style="color:var(--cyan);font-family:'JetBrains Mono',monospace;">mcp_servers</code>.
+        Replace the URL with your actual RunPod proxy address. Save and restart Hermes.
+      </p>
+    </div>
+
+    <div class="config-wrap reveal">
+      <div class="config-wrap-header">
+        <div class="cfg-dot" style="background:#ff5f56;"></div>
+        <div class="cfg-dot" style="background:#ffbd2e;"></div>
+        <div class="cfg-dot" style="background:#27c93f;"></div>
+        <span class="cfg-path">C:\Users\palas\AppData\Local\hermes\config.yaml</span>
+      </div>
+      <pre><span class="y-key">known_plugin_toolsets</span>:
+  <span class="y-key">cli</span>:
+    <span class="y-key">enabled</span>: <span class="y-val">true</span>
+  <span class="y-key">mcp_servers</span>:
+    <span class="y-key">claude-code</span>:
+      <span class="y-key">command</span>: <span class="y-val">claude</span>
+      <span class="y-key">args</span>:
+        - <span class="y-val">mcp</span>
+        - <span class="y-val">serve</span>
+      <span class="y-key">timeout</span>: <span class="y-num">300</span>
+
+<span class="y-hl">    <span class="y-key">marlin</span>:                                         <span class="y-cmt"># ← add this block</span>
+      <span class="y-key">url</span>: <span class="y-val">"https://&lt;your-pod-id&gt;-8006.proxy.runpod.net/mcp"</span>
+      <span class="y-key">timeout</span>: <span class="y-num">120</span>
+      <span class="y-key">connect_timeout</span>: <span class="y-num">60</span></span>
+
+  <span class="y-key">image_gen</span>:
+    <span class="y-key">use_gateway</span>: <span class="y-val">true</span></pre>
+    </div>
+
+    <div class="reveal" style="margin-top:2rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;text-align:center;">
+        <div style="font-size:1.5rem;margin-bottom:.5rem;">✅</div>
+        <div style="font-weight:700;font-size:.9rem;">Save the file</div>
+        <div style="color:var(--muted);font-size:.8rem;margin-top:.3rem;">config.yaml</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;text-align:center;">
+        <div style="font-size:1.5rem;margin-bottom:.5rem;">🔄</div>
+        <div style="font-weight:700;font-size:.9rem;">Restart Hermes</div>
+        <div style="color:var(--muted);font-size:.8rem;margin-top:.3rem;">picks up new config</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;text-align:center;">
+        <div style="font-size:1.5rem;margin-bottom:.5rem;">🎬</div>
+        <div style="font-weight:700;font-size:.9rem;">Use the tools</div>
+        <div style="color:var(--muted);font-size:.8rem;margin-top:.3rem;">describe · search</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-inner">
+    <div class="section-label reveal">Open Source</div>
+    <h2 class="section-title reveal">Ready to give your<br>AI <span>video vision</span>?</h2>
+    <p class="section-body reveal">
+      The full source — both server files and this README — is on GitHub.
+      Fork it, modify it, and deploy your own Marlin MCP in under 15 minutes.
+    </p>
+    <div class="cta-buttons reveal">
+      <a href="https://github.com/PromptEngineer48/Marlin-2B-MCP" target="_blank" class="btn btn-primary">GitHub Repository →</a>
+      <a href="https://huggingface.co/NemoStation/Marlin-2B" target="_blank" class="btn btn-outline">Marlin-2B on HuggingFace →</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  Built with <a href="https://github.com/PromptEngineer48/Marlin-2B-MCP" target="_blank">Marlin-2B</a> + FastMCP + FastAPI ·
+  Model by <a href="https://huggingface.co/NemoStation/Marlin-2B" target="_blank">NemoStation</a>
+</footer>
+
+<script>
+// ── STARS ──
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+let stars = [];
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 200; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.2,
+      a: Math.random(),
+      speed: 0.0002 + Math.random() * 0.0005
+    });
+  }
+}
+
+function drawStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const t = Date.now();
+  stars.forEach(s => {
+    const alpha = 0.2 + 0.6 * Math.abs(Math.sin(t * s.speed + s.a * 100));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+
+resize();
+initStars();
+drawStars();
+window.addEventListener('resize', () => { resize(); initStars(); });
+
+// ── SCROLL REVEAL ──
+const reveals = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+reveals.forEach(el => io.observe(el));
+
+// ── COPY BUTTONS ──
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.textContent = 'copy'; btn.style.color = ''; }, 2000);
+  });
+}
+
+// ── ACTIVE NAV ──
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll', () => {
+  let cur = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) cur = s.id;
+  });
+  navLinks.forEach(a => {
+    a.style.color = a.getAttribute('href') === '#' + cur ? 'var(--cyan)' : '';
+  });
+}, { passive: true });
+</script>
+</body>
+</html>
