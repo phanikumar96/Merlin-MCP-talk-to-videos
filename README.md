@@ -2,7 +2,6 @@
 
 An MCP (Model Context Protocol) server that exposes [NemoStation/Marlin-2B](https://huggingface.co/NemoStation/Marlin-2B) — a video language model — as tools for AI assistants. It provides two tools: **describe_video** (caption + scene + events) and **search_video_event** (temporal event grounding).
 
-**Repository:** https://github.com/PromptEngineer48/Marlin-2B-MCP
 
 ---
 
